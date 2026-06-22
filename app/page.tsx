@@ -214,7 +214,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [openNowOnly]);
 
   const clearHistory = () => { localStorage.removeItem("seen_place_ids"); setTotalGenerated(0); setLeads([]); };
 
