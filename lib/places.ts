@@ -8,6 +8,7 @@ export type BusinessLead = {
   category: string;
   rating: number | null;
   reviewCount: number | null;
+  hours: string[] | null;
   summary: string;
 };
 
@@ -90,6 +91,9 @@ type NewPlaceResult = {
   rating?: number;
   userRatingCount?: number;
   businessStatus?: string;
+  regularOpeningHours?: {
+    weekdayDescriptions?: string[];
+  };
 };
 
 async function searchAndFetchPlaces(
@@ -111,6 +115,7 @@ async function searchAndFetchPlaces(
         "places.rating",
         "places.userRatingCount",
         "places.businessStatus",
+        "places.regularOpeningHours",
       ].join(","),
     },
     body: JSON.stringify({ textQuery: query, maxResultCount: 20 }),
@@ -273,6 +278,7 @@ export async function fetchLeads(
       category: candidate.type.label,
       rating: p.rating ?? null,
       reviewCount: p.userRatingCount ?? null,
+      hours: p.regularOpeningHours?.weekdayDescriptions ?? null,
     };
 
     const summary = await generateSummary(base);

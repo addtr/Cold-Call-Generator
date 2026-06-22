@@ -12,6 +12,7 @@ type Lead = {
   category: string;
   rating: number | null;
   reviewCount: number | null;
+  hours: string[] | null;
   summary: string;
 };
 
@@ -130,6 +131,7 @@ function LeadCard({ lead, index }: { lead: Lead; index: number }) {
         background: "#0a0a14", border: "1px solid var(--border)",
         borderRadius: 12, padding: "12px 14px",
         borderLeft: `3px solid ${accent}`,
+        marginBottom: lead.hours ? 12 : 0,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
           <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)" }} />
@@ -139,6 +141,32 @@ function LeadCard({ lead, index }: { lead: Lead; index: number }) {
         </div>
         <p style={{ margin: 0, color: "#c0c0d8", fontSize: 13, lineHeight: 1.6 }}>{lead.summary}</p>
       </div>
+
+      {/* Hours */}
+      {lead.hours && lead.hours.length > 0 && (
+        <div style={{
+          background: "#0a0a14", border: "1px solid var(--border)",
+          borderRadius: 12, padding: "12px 14px",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+            <span style={{ fontSize: 13 }}>🕐</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Business Hours
+            </span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "3px 16px" }}>
+            {lead.hours.map((line, i) => {
+              const [day, ...rest] = line.split(": ");
+              return (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+                  <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>{day}</span>
+                  <span style={{ color: "#c0c0d8", fontSize: 12, textAlign: "right" }}>{rest.join(": ")}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
