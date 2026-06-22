@@ -94,6 +94,9 @@ type NewPlaceResult = {
   regularOpeningHours?: {
     weekdayDescriptions?: string[];
   };
+  currentOpeningHours?: {
+    openNow?: boolean;
+  };
 };
 
 async function searchAndFetchPlaces(
@@ -116,6 +119,7 @@ async function searchAndFetchPlaces(
         "places.userRatingCount",
         "places.businessStatus",
         "places.regularOpeningHours",
+        "places.currentOpeningHours",
       ].join(","),
     },
     body: JSON.stringify({ textQuery: query, maxResultCount: 20 }),
@@ -205,6 +209,7 @@ export async function fetchLeads(
   seenIds: string[],
   apiKey: string,
   serperKey: string | null,
+  openNowOnly: boolean,
   generateSummary: (business: Omit<BusinessLead, "summary">) => Promise<string>
 ): Promise<BusinessLead[]> {
   const leads: BusinessLead[] = [];
@@ -244,6 +249,9 @@ export async function fetchLeads(
 
     // Must be operational
     if (p.businessStatus && p.businessStatus !== "OPERATIONAL") continue;
+
+    // If open-now filter is on, skip businesses that are currently closed
+    if (openNowOnly && !p.currentOpeningHours?.openNow) continue;
 
     // Must NOT have a website (Places API check)
     if (p.websiteUri) continue;

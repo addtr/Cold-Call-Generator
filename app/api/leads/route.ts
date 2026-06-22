@@ -56,9 +56,10 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const seenIds: string[] = Array.isArray(body.seenIds) ? body.seenIds : [];
+  const openNowOnly: boolean = body.openNowOnly === true;
 
   try {
-    const leads = await fetchLeads(seenIds, apiKey, serperKey, generateSummary);
+    const leads = await fetchLeads(seenIds, apiKey, serperKey, openNowOnly, generateSummary);
     return NextResponse.json({ leads, aiSummaries: useAI });
   } catch (err) {
     console.error(err);

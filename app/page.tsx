@@ -186,6 +186,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalGenerated, setTotalGenerated] = useState(0);
+  const [openNowOnly, setOpenNowOnly] = useState(false);
 
   const getSeen = (): string[] => {
     try { return JSON.parse(localStorage.getItem("seen_place_ids") || "[]"); } catch { return []; }
@@ -201,7 +202,7 @@ export default function Home() {
       const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seenIds: getSeen() }),
+        body: JSON.stringify({ seenIds: getSeen(), openNowOnly }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Something went wrong."); return; }
@@ -260,6 +261,35 @@ export default function Home() {
                 Reset history
               </button>
             )}
+            {/* Open Now toggle */}
+            <button
+              onClick={() => setOpenNowOnly(v => !v)}
+              disabled={loading}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: openNowOnly ? "rgba(16,217,126,0.12)" : "var(--bg-card)",
+                border: `1px solid ${openNowOnly ? "rgba(16,217,126,0.4)" : "var(--border)"}`,
+                borderRadius: 10, padding: "9px 14px",
+                color: openNowOnly ? "var(--green)" : "var(--text-secondary)",
+                fontWeight: 600, fontSize: 13, cursor: loading ? "not-allowed" : "pointer",
+                transition: "all 0.15s", whiteSpace: "nowrap",
+              }}
+            >
+              {/* Toggle pill */}
+              <div style={{
+                width: 32, height: 18, borderRadius: 9, position: "relative",
+                background: openNowOnly ? "var(--green)" : "var(--border)",
+                transition: "background 0.2s", flexShrink: 0,
+              }}>
+                <div style={{
+                  position: "absolute", top: 3, left: openNowOnly ? 17 : 3,
+                  width: 12, height: 12, borderRadius: "50%", background: "white",
+                  transition: "left 0.2s",
+                }} />
+              </div>
+              Open Now Only
+            </button>
+
             <button
               onClick={generate}
               disabled={loading}
