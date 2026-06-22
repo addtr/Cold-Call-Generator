@@ -8,7 +8,6 @@ export type BusinessLead = {
   category: string;
   rating: number | null;
   reviewCount: number | null;
-  yearsInBusiness?: string;
   summary: string;
 };
 
@@ -81,46 +80,51 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5);
 }
 
-async function searchPlaces(query: string, apiKey: string): Promise<string[]> {
-  const url = new URL("https://maps.googleapis.com/maps/api/place/textsearch/json");
-  url.searchParams.set("query", query);
-  url.searchParams.set("key", apiKey);
-  url.searchParams.set("type", "establishment");
-
-  const res = await fetch(url.toString());
-  if (!res.ok) return [];
-  const data = await res.json();
-  if (data.status !== "OK") return [];
-  return (data.results || []).map((r: { place_id: string }) => r.place_id);
-}
-
-type PlaceDetails = {
-  name?: string;
-  formatted_phone_number?: string;
-  international_phone_number?: string;
-  formatted_address?: string;
-  website?: string;
+type NewPlaceResult = {
+  id: string;
+  displayName?: { text: string };
+  formattedAddress?: string;
+  nationalPhoneNumber?: string;
+  internationalPhoneNumber?: string;
+  websiteUri?: string;
   rating?: number;
-  user_ratings_total?: number;
-  business_status?: string;
+  userRatingCount?: number;
+  businessStatus?: string;
 };
 
-async function getPlaceDetails(placeId: string, apiKey: string): Promise<PlaceDetails | null> {
-  const url = new URL("https://maps.googleapis.com/maps/api/place/details/json");
-  url.searchParams.set("place_id", placeId);
-  url.searchParams.set("fields", "name,formatted_phone_number,international_phone_number,formatted_address,website,rating,user_ratings_total,business_status");
-  url.searchParams.set("key", apiKey);
+async function searchAndFetchPlaces(
+  query: string,
+  apiKey: string
+): Promise<NewPlaceResult[]> {
+  const res = await fetch("https://places.googleapis.com/v1/places:searchText", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Goog-Api-Key": apiKey,
+      "X-Goog-FieldMask": [
+        "places.id",
+        "places.displayName",
+        "places.formattedAddress",
+        "places.nationalPhoneNumber",
+        "places.internationalPhoneNumber",
+        "places.websiteUri",
+        "places.rating",
+        "places.userRatingCount",
+        "places.businessStatus",
+      ].join(","),
+    },
+    body: JSON.stringify({ textQuery: query, maxResultCount: 20 }),
+  });
 
-  const res = await fetch(url.toString());
-  if (!res.ok) return null;
+  if (!res.ok) return [];
   const data = await res.json();
-  if (data.status !== "OK") return null;
-  return data.result;
+  return data.places || [];
 }
 
 function parseLocation(address: string): { city: string; state: string } {
   const parts = address.split(",").map((p) => p.trim());
-  const state = parts.length >= 2 ? parts[parts.length - 2]?.split(" ")[0] ?? "" : "";
+  const stateZip = parts.length >= 2 ? parts[parts.length - 2] : "";
+  const state = stateZip.split(" ")[0] ?? "";
   const city = parts.length >= 3 ? parts[parts.length - 3] ?? "" : "";
   return { city, state };
 }
@@ -132,62 +136,67 @@ export async function fetchLeads(
 ): Promise<BusinessLead[]> {
   const leads: BusinessLead[] = [];
   const seen = new Set(seenIds);
-  const candidates: { placeId: string; type: { query: string; label: string }; location: { city: string; state: string } }[] = [];
+
+  type Candidate = {
+    place: NewPlaceResult;
+    type: { query: string; label: string };
+    location: { city: string; state: string };
+  };
+  const candidates: Candidate[] = [];
 
   const shuffledCities = shuffle(EAST_COAST_CITIES);
   const shuffledTypes = shuffle(BUSINESS_TYPES);
 
-  // Build a pool of candidate place IDs across shuffled city+type combos
   for (const location of shuffledCities.slice(0, 12)) {
     for (const type of shuffledTypes.slice(0, 5)) {
       const query = `${type.query} in ${location.city} ${location.state}`;
-      const ids = await searchPlaces(query, apiKey);
-      for (const id of ids) {
-        if (!seen.has(id)) {
-          candidates.push({ placeId: id, type, location });
+      const places = await searchAndFetchPlaces(query, apiKey);
+      for (const place of places) {
+        if (!seen.has(place.id)) {
+          candidates.push({ place, type, location });
         }
       }
-      if (candidates.length >= 120) break;
+      if (candidates.length >= 150) break;
     }
-    if (candidates.length >= 120) break;
+    if (candidates.length >= 150) break;
   }
 
   const shuffledCandidates = shuffle(candidates);
 
   for (const candidate of shuffledCandidates) {
     if (leads.length >= 20) break;
-    if (seen.has(candidate.placeId)) continue;
+    if (seen.has(candidate.place.id)) continue;
 
-    const details = await getPlaceDetails(candidate.placeId, apiKey);
-    if (!details) continue;
-    if (details.business_status && details.business_status !== "OPERATIONAL") continue;
+    const p = candidate.place;
+
+    // Must be operational
+    if (p.businessStatus && p.businessStatus !== "OPERATIONAL") continue;
 
     // Must NOT have a website
-    if (details.website) continue;
+    if (p.websiteUri) continue;
 
     // Must have a phone number
-    const phone = details.formatted_phone_number || details.international_phone_number;
+    const phone = p.nationalPhoneNumber || p.internationalPhoneNumber;
     if (!phone) continue;
 
-    const address = details.formatted_address || "";
+    const address = p.formattedAddress || "";
     const loc = parseLocation(address);
 
     const base: Omit<BusinessLead, "summary"> = {
-      placeId: candidate.placeId,
-      name: details.name || "Unknown",
+      placeId: p.id,
+      name: p.displayName?.text || "Unknown",
       phone,
       address,
       city: loc.city || candidate.location.city,
       state: loc.state || candidate.location.state,
       category: candidate.type.label,
-      rating: details.rating ?? null,
-      reviewCount: details.user_ratings_total ?? null,
+      rating: p.rating ?? null,
+      reviewCount: p.userRatingCount ?? null,
     };
 
     const summary = await generateSummary(base);
-
     leads.push({ ...base, summary });
-    seen.add(candidate.placeId);
+    seen.add(p.id);
   }
 
   return leads;
