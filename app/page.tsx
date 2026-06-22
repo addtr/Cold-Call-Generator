@@ -16,137 +16,140 @@ type Lead = {
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
-  Plumbing: "🔧",
-  Electrical: "⚡",
-  "Barber Shop": "✂️",
-  "Hair Salon": "💇",
-  "Auto Repair": "🚗",
-  Handyman: "🔨",
-  Landscaping: "🌿",
-  Painting: "🎨",
-  Roofing: "🏠",
-  HVAC: "❄️",
-  Locksmith: "🔑",
-  "Pest Control": "🐛",
-  "Carpet Cleaning": "🧹",
-  "Pressure Washing": "💧",
-  Flooring: "🪵",
-  "Tile & Masonry": "🧱",
-  Fencing: "🪚",
-  "Pool Service": "🏊",
-  Towing: "🚛",
-  "Cleaning Service": "🧽",
+  Plumbing: "🔧", Electrical: "⚡", "Barber Shop": "✂️", "Hair Salon": "💇",
+  "Auto Repair": "🚗", Handyman: "🔨", Landscaping: "🌿", Painting: "🎨",
+  Roofing: "🏠", HVAC: "❄️", Locksmith: "🔑", "Pest Control": "🐛",
+  "Carpet Cleaning": "🧹", "Pressure Washing": "💧", Flooring: "🪵",
+  "Tile & Masonry": "🧱", Fencing: "🪚", "Pool Service": "🏊",
+  Towing: "🚛", "Cleaning Service": "🧽",
 };
 
-const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Plumbing: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
-  Electrical: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20" },
-  "Barber Shop": { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20" },
-  "Hair Salon": { bg: "bg-pink-500/10", text: "text-pink-400", border: "border-pink-500/20" },
-  "Auto Repair": { bg: "bg-slate-500/10", text: "text-slate-400", border: "border-slate-500/20" },
-  Handyman: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
-  Landscaping: { bg: "bg-green-500/10", text: "text-green-400", border: "border-green-500/20" },
-  Painting: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20" },
-  Roofing: { bg: "bg-stone-500/10", text: "text-stone-400", border: "border-stone-500/20" },
-  HVAC: { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/20" },
-  Locksmith: { bg: "bg-indigo-500/10", text: "text-indigo-400", border: "border-indigo-500/20" },
-  "Pest Control": { bg: "bg-lime-500/10", text: "text-lime-400", border: "border-lime-500/20" },
-  "Carpet Cleaning": { bg: "bg-teal-500/10", text: "text-teal-400", border: "border-teal-500/20" },
-  "Pressure Washing": { bg: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/20" },
-  Flooring: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20" },
-  "Tile & Masonry": { bg: "bg-slate-500/10", text: "text-slate-400", border: "border-slate-500/20" },
-  Fencing: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
-  "Pool Service": { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
-  Towing: { bg: "bg-zinc-500/10", text: "text-zinc-400", border: "border-zinc-500/20" },
-  "Cleaning Service": { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/20" },
+const CATEGORY_ACCENT: Record<string, string> = {
+  Plumbing: "#3b82f6", Electrical: "#f59e0b", "Barber Shop": "#a855f7",
+  "Hair Salon": "#ec4899", "Auto Repair": "#6b7280", Handyman: "#f97316",
+  Landscaping: "#22c55e", Painting: "#ef4444", Roofing: "#78716c",
+  HVAC: "#06b6d4", Locksmith: "#6366f1", "Pest Control": "#84cc16",
+  "Carpet Cleaning": "#14b8a6", "Pressure Washing": "#0ea5e9",
+  Flooring: "#d97706", "Tile & Masonry": "#64748b", Fencing: "#10b981",
+  "Pool Service": "#3b82f6", Towing: "#71717a", "Cleaning Service": "#8b5cf6",
 };
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <span className="flex items-center gap-1">
+    <span style={{ display: "flex", alignItems: "center", gap: 3 }}>
       {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} className={`w-3.5 h-3.5 ${i < Math.round(rating) ? "text-amber-400" : "text-gray-700"}`} fill="currentColor" viewBox="0 0 20 20">
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-        </svg>
+        <span key={i} style={{ color: i < Math.round(rating) ? "#f59e0b" : "#2a2a3d", fontSize: 13 }}>★</span>
       ))}
-      <span className="text-amber-400 text-xs font-medium ml-0.5">{rating.toFixed(1)}</span>
+      <span style={{ color: "#f59e0b", fontSize: 12, fontWeight: 600, marginLeft: 2 }}>{rating.toFixed(1)}</span>
     </span>
   );
 }
 
 function LeadCard({ lead, index }: { lead: Lead; index: number }) {
-  const color = CATEGORY_COLORS[lead.category] || { bg: "bg-gray-500/10", text: "text-gray-400", border: "border-gray-500/20" };
+  const accent = CATEGORY_ACCENT[lead.category] || "#10d97e";
   const icon = CATEGORY_ICONS[lead.category] || "🏢";
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <div className="group relative bg-gradient-to-b from-gray-800/60 to-gray-900/60 border border-gray-700/50 rounded-2xl p-5 hover:border-gray-600/80 hover:from-gray-800/80 hover:to-gray-900/80 transition-all duration-200 hover:shadow-xl hover:shadow-black/20">
-      {/* Top row */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <div className={`shrink-0 w-10 h-10 rounded-xl ${color.bg} border ${color.border} flex items-center justify-center text-lg`}>
-            {icon}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${color.bg} ${color.text} border ${color.border}`}>
-                {lead.category}
-              </span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
-                No Website
-              </span>
-            </div>
-            <h3 className="text-white font-bold text-base leading-tight">{lead.name}</h3>
-          </div>
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "var(--bg-card-hover)" : "var(--bg-card)",
+        border: `1px solid ${hovered ? "var(--border-hover)" : "var(--border)"}`,
+        borderRadius: 16,
+        padding: "20px",
+        transition: "all 0.15s ease",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      {/* Accent line at top */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${accent}, transparent)` }} />
+
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 16 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+          background: `${accent}18`, border: `1px solid ${accent}30`,
+          display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+        }}>
+          {icon}
         </div>
-        <span className="shrink-0 text-xs font-mono text-gray-600 mt-1">#{index + 1}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+              background: `${accent}18`, color: accent, border: `1px solid ${accent}30`,
+              letterSpacing: "0.02em",
+            }}>
+              {lead.category}
+            </span>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+              background: "#3d0f0f", color: "#f87171", border: "1px solid #7f1d1d",
+            }}>
+              No Website
+            </span>
+          </div>
+          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
+            {lead.name}
+          </h3>
+        </div>
+        <span style={{ color: "var(--text-muted)", fontSize: 11, fontFamily: "monospace", flexShrink: 0 }}>#{index + 1}</span>
       </div>
 
-      {/* Details */}
-      <div className="space-y-2 mb-4">
-        <div className="flex items-center gap-2.5">
-          <svg className="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          <span className="text-gray-400 text-sm truncate">{lead.address}</span>
+      {/* Info rows */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: "var(--text-muted)", fontSize: 13, flexShrink: 0 }}>📍</span>
+          <span style={{ color: "var(--text-secondary)", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{lead.address}</span>
         </div>
-
-        <div className="flex items-center gap-2.5">
-          <svg className="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-          </svg>
-          <a
-            href={`tel:${lead.phone.replace(/\s/g, "")}`}
-            className="text-emerald-400 font-mono font-semibold text-sm hover:text-emerald-300 transition-colors"
-          >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ color: "var(--text-muted)", fontSize: 13, flexShrink: 0 }}>📞</span>
+          <a href={`tel:${lead.phone.replace(/\s/g, "")}`} style={{
+            color: "var(--green)", fontFamily: "monospace", fontWeight: 700, fontSize: 14,
+            textDecoration: "none", letterSpacing: "0.03em",
+          }}>
             {lead.phone}
           </a>
         </div>
-
         {lead.rating && (
-          <div className="flex items-center gap-2.5">
-            <svg className="w-3.5 h-3.5 text-gray-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            <div className="flex items-center gap-2">
-              <StarRating rating={lead.rating} />
-              {lead.reviewCount && (
-                <span className="text-gray-500 text-xs">({lead.reviewCount.toLocaleString()} reviews)</span>
-              )}
-            </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "var(--text-muted)", fontSize: 13, flexShrink: 0 }}>⭐</span>
+            <StarRating rating={lead.rating} />
+            {lead.reviewCount && (
+              <span style={{ color: "var(--text-muted)", fontSize: 12 }}>({lead.reviewCount.toLocaleString()} reviews)</span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Summary */}
-      <div className="relative bg-gray-900/80 rounded-xl p-3.5 border border-gray-700/40">
-        <div className="flex items-center gap-1.5 mb-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-          <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Call Talking Points</span>
+      {/* Talking points */}
+      <div style={{
+        background: "#0a0a14", border: "1px solid var(--border)",
+        borderRadius: 12, padding: "12px 14px",
+        borderLeft: `3px solid ${accent}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)" }} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Call Talking Points
+          </span>
         </div>
-        <p className="text-gray-300 text-sm leading-relaxed">{lead.summary}</p>
+        <p style={{ margin: 0, color: "#c0c0d8", fontSize: 13, lineHeight: 1.6 }}>{lead.summary}</p>
       </div>
     </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation: "spin 0.7s linear infinite" }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
+      <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -157,16 +160,10 @@ export default function Home() {
   const [totalGenerated, setTotalGenerated] = useState(0);
 
   const getSeen = (): string[] => {
-    try {
-      return JSON.parse(localStorage.getItem("seen_place_ids") || "[]");
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(localStorage.getItem("seen_place_ids") || "[]"); } catch { return []; }
   };
-
   const saveSeen = (ids: string[]) => {
-    const merged = Array.from(new Set([...getSeen(), ...ids]));
-    localStorage.setItem("seen_place_ids", JSON.stringify(merged));
+    localStorage.setItem("seen_place_ids", JSON.stringify(Array.from(new Set([...getSeen(), ...ids]))));
   };
 
   const generate = useCallback(async () => {
@@ -182,7 +179,7 @@ export default function Home() {
       if (!res.ok) { setError(data.error || "Something went wrong."); return; }
       saveSeen(data.leads.map((l: Lead) => l.placeId));
       setLeads(data.leads);
-      setTotalGenerated((p) => p + data.leads.length);
+      setTotalGenerated(p => p + data.leads.length);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -190,129 +187,143 @@ export default function Home() {
     }
   }, []);
 
-  const clearHistory = () => {
-    localStorage.removeItem("seen_place_ids");
-    setTotalGenerated(0);
-    setLeads([]);
-  };
-
-  const seenCount = typeof window !== "undefined" ? getSeen().length : 0;
+  const clearHistory = () => { localStorage.removeItem("seen_place_ids"); setTotalGenerated(0); setLeads([]); };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f]">
-      {/* Subtle gradient background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-emerald-950/20 via-transparent to-blue-950/20 pointer-events-none" />
+    <div style={{ minHeight: "100vh", background: "var(--bg-main)" }}>
 
       {/* Header */}
-      <header className="relative border-b border-gray-800/60 bg-gray-900/40 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="text-lg">📞</span>
-            </div>
+      <header style={{
+        borderBottom: "1px solid var(--border)",
+        background: "rgba(13,13,20,0.9)",
+        backdropFilter: "blur(12px)",
+        position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: "linear-gradient(135deg, #10d97e, #0891b2)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18,
+              boxShadow: "0 0 20px rgba(16,217,126,0.3)",
+            }}>📞</div>
             <div>
-              <h1 className="text-white font-bold text-lg leading-none">Cold Call Generator</h1>
-              <p className="text-gray-500 text-xs mt-0.5">East Coast · No-website businesses · Verified numbers</p>
+              <div style={{ fontWeight: 800, fontSize: 16, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>Cold Call Generator</div>
+              <div style={{ fontSize: 11, color: "var(--text-muted)" }}>East Coast · No-website businesses · Verified numbers</div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             {totalGenerated > 0 && (
-              <div className="hidden sm:flex items-center gap-1.5 bg-gray-800/60 border border-gray-700/50 rounded-lg px-3 py-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-gray-300 text-xs font-medium">{totalGenerated} leads generated</span>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 6,
+                background: "var(--bg-card)", border: "1px solid var(--border)",
+                borderRadius: 8, padding: "6px 12px",
+              }}>
+                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--green)", boxShadow: "0 0 6px var(--green)" }} />
+                <span style={{ color: "var(--text-secondary)", fontSize: 12, fontWeight: 600 }}>{totalGenerated} leads generated</span>
               </div>
             )}
-            {seenCount > 0 && (
-              <button onClick={clearHistory} className="text-xs text-gray-600 hover:text-gray-400 transition-colors">
+            {totalGenerated > 0 && (
+              <button onClick={clearHistory} style={{
+                background: "none", border: "none", color: "var(--text-muted)",
+                fontSize: 12, cursor: "pointer", padding: "4px 8px",
+              }}>
                 Reset history
               </button>
             )}
             <button
               onClick={generate}
               disabled={loading}
-              className="relative flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30"
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                background: loading ? "#0a3d26" : "linear-gradient(135deg, #10d97e, #0891b2)",
+                border: "none", borderRadius: 10, padding: "10px 20px",
+                color: "white", fontWeight: 700, fontSize: 14, cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.7 : 1, transition: "all 0.15s",
+                boxShadow: loading ? "none" : "0 0 20px rgba(16,217,126,0.25)",
+              }}
             >
-              {loading ? (
-                <>
-                  <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Searching...
-                </>
-              ) : (
-                <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  {leads.length === 0 ? "Generate 20 Leads" : "Generate 20 More"}
-                </>
-              )}
+              {loading ? <Spinner /> : "⚡"}
+              {loading ? "Searching..." : leads.length === 0 ? "Generate 20 Leads" : "Generate 20 More"}
             </button>
           </div>
         </div>
       </header>
 
-      <div className="relative max-w-6xl mx-auto px-6 py-8">
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
 
         {/* Error */}
         {error && (
-          <div className="mb-6 bg-red-950/40 border border-red-800/50 rounded-2xl p-5">
-            <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-red-300 font-semibold text-sm">Error</p>
-            </div>
-            <p className="text-red-400 text-sm">{error}</p>
+          <div style={{
+            background: "#1a0a0a", border: "1px solid #7f1d1d", borderRadius: 12, padding: 16, marginBottom: 24,
+          }}>
+            <div style={{ color: "#f87171", fontWeight: 700, marginBottom: 4 }}>⚠ Error</div>
+            <div style={{ color: "#fca5a5", fontSize: 13 }}>{error}</div>
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading */}
         {loading && (
-          <div className="mb-8 bg-gray-800/40 border border-gray-700/40 rounded-2xl p-8 text-center">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-white font-semibold">Finding leads across the East Coast...</span>
+          <div style={{
+            background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16,
+            padding: 40, textAlign: "center", marginBottom: 24,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, marginBottom: 12 }}>
+              <Spinner />
+              <span style={{ color: "var(--text-primary)", fontWeight: 700, fontSize: 16 }}>Searching East Coast businesses...</span>
             </div>
-            <p className="text-gray-500 text-sm">Searching businesses · Verifying no websites · Confirming phone numbers</p>
-            <p className="text-gray-600 text-xs mt-1">This takes about 30–60 seconds</p>
+            <p style={{ color: "var(--text-muted)", fontSize: 13, margin: "0 0 4px" }}>Verifying no websites · Confirming phone numbers</p>
+            <p style={{ color: "var(--text-muted)", fontSize: 12, margin: 0 }}>Takes about 30–60 seconds</p>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && leads.length === 0 && !error && (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/20 flex items-center justify-center text-4xl mb-6">
-              📞
-            </div>
-            <h2 className="text-white text-2xl font-bold mb-3">Ready to find leads</h2>
-            <p className="text-gray-500 max-w-md text-sm leading-relaxed mb-8">
-              Find real East Coast small businesses with no website and verified phone numbers.
-              Perfect targets for pitching web design services.
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <div style={{
+              width: 80, height: 80, borderRadius: 20, margin: "0 auto 24px",
+              background: "linear-gradient(135deg, rgba(16,217,126,0.15), rgba(8,145,178,0.15))",
+              border: "1px solid rgba(16,217,126,0.2)",
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36,
+            }}>📞</div>
+            <h2 style={{ color: "var(--text-primary)", fontSize: 26, fontWeight: 800, margin: "0 0 10px", letterSpacing: "-0.02em" }}>
+              Ready to find leads
+            </h2>
+            <p style={{ color: "var(--text-secondary)", fontSize: 14, maxWidth: 420, margin: "0 auto 36px", lineHeight: 1.6 }}>
+              Real East Coast small businesses with no website and verified phone numbers — perfect targets for pitching web design.
             </p>
-            <div className="grid grid-cols-3 gap-4 mb-8 text-center">
+
+            {/* Feature pills */}
+            <div style={{ display: "flex", justifyContent: "center", gap: 12, flexWrap: "wrap", marginBottom: 36 }}>
               {[
-                { icon: "🔍", label: "Real businesses", sub: "from Google Maps" },
-                { icon: "✅", label: "No website", sub: "verified per lead" },
-                { icon: "📱", label: "Phone verified", sub: "ready to call" },
-              ].map((f) => (
-                <div key={f.label} className="bg-gray-800/40 border border-gray-700/40 rounded-xl p-4">
-                  <div className="text-2xl mb-1">{f.icon}</div>
-                  <div className="text-white text-sm font-semibold">{f.label}</div>
-                  <div className="text-gray-500 text-xs">{f.sub}</div>
+                { icon: "🔍", text: "Real Google Maps data" },
+                { icon: "✅", text: "No website verified" },
+                { icon: "📱", text: "Phone number confirmed" },
+                { icon: "🔄", text: "Zero repeats ever" },
+              ].map(f => (
+                <div key={f.text} style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  background: "var(--bg-card)", border: "1px solid var(--border)",
+                  borderRadius: 50, padding: "8px 16px",
+                  color: "var(--text-secondary)", fontSize: 13, fontWeight: 500,
+                }}>
+                  <span>{f.icon}</span> {f.text}
                 </div>
               ))}
             </div>
+
             <button
               onClick={generate}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold px-8 py-3.5 rounded-xl text-base transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02]"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 10,
+                background: "linear-gradient(135deg, #10d97e, #0891b2)",
+                border: "none", borderRadius: 12, padding: "14px 32px",
+                color: "white", fontWeight: 800, fontSize: 16, cursor: "pointer",
+                boxShadow: "0 0 30px rgba(16,217,126,0.3)", letterSpacing: "-0.01em",
+              }}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              Generate 20 Leads
+              ⚡ Generate 20 Leads
             </button>
           </div>
         )}
@@ -320,35 +331,42 @@ export default function Home() {
         {/* Results */}
         {leads.length > 0 && !loading && (
           <>
-            <div className="flex items-center justify-between mb-5">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <div>
-                <h2 className="text-white font-bold text-lg">{leads.length} Leads Ready</h2>
-                <p className="text-gray-500 text-xs mt-0.5">All verified · no website · phone confirmed · {seenCount} total seen (no repeats)</p>
+                <h2 style={{ margin: 0, color: "var(--text-primary)", fontSize: 20, fontWeight: 800, letterSpacing: "-0.02em" }}>
+                  {leads.length} Leads Ready
+                </h2>
+                <p style={{ margin: "2px 0 0", color: "var(--text-muted)", fontSize: 12 }}>
+                  All verified · no website · phone confirmed
+                </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-              {leads.map((lead, i) => (
-                <LeadCard key={lead.placeId} lead={lead} index={i} />
-              ))}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(480px, 1fr))", gap: 16, marginBottom: 32 }}>
+              {leads.map((lead, i) => <LeadCard key={lead.placeId} lead={lead} index={i} />)}
             </div>
 
-            <div className="text-center pb-4">
+            <div style={{ textAlign: "center" }}>
               <button
                 onClick={generate}
                 disabled={loading}
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold px-8 py-3.5 rounded-xl text-base transition-all duration-200 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02]"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: 10,
+                  background: "linear-gradient(135deg, #10d97e, #0891b2)",
+                  border: "none", borderRadius: 12, padding: "14px 32px",
+                  color: "white", fontWeight: 800, fontSize: 15, cursor: "pointer",
+                  boxShadow: "0 0 30px rgba(16,217,126,0.25)", opacity: loading ? 0.6 : 1,
+                }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Generate 20 More — No Repeats
+                ⚡ Generate 20 More — No Repeats
               </button>
-              <p className="text-gray-600 text-xs mt-2">{seenCount} businesses excluded from future results</p>
+              <p style={{ color: "var(--text-muted)", fontSize: 12, marginTop: 8 }}>
+                {getSeen().length} businesses already excluded
+              </p>
             </div>
           </>
         )}
       </div>
-    </main>
+    </div>
   );
 }
