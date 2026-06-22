@@ -156,27 +156,37 @@ async function hasWebsiteViaSearch(
         "Content-Type": "application/json",
         "X-API-KEY": serperKey,
       },
-      body: JSON.stringify({ q: `"${name}" ${city} ${state}`, num: 5 }),
+      body: JSON.stringify({ q: `"${name}" ${city} ${state}`, num: 10 }),
     });
     if (!res.ok) return false;
     const data = await res.json();
 
-    // Check knowledge graph website
+    // Knowledge graph with a non-directory website = has a site
     if (data.knowledgeGraph?.website) {
-      const site = data.knowledgeGraph.website;
-      if (!isDirectorySite(site)) return true;
+      if (!isDirectorySite(data.knowledgeGraph.website)) return true;
     }
 
-    // Check organic results for a dedicated business site
+    // Build a set of meaningful words from the business name (3+ chars)
+    const nameWords = name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .split(/\s+/)
+      .filter((w) => w.length >= 3 && !["the","and","for","llc","inc","co"].includes(w));
+
     for (const result of data.organic || []) {
       const link: string = result.link || "";
-      if (!isDirectorySite(link)) {
-        // If the result title or snippet strongly matches the business name, it's their site
-        const title: string = (result.title || "").toLowerCase();
-        const nameLower = name.toLowerCase().split(" ")[0];
-        if (nameLower.length > 3 && title.includes(nameLower)) {
-          return true;
-        }
+      if (isDirectorySite(link)) continue;
+
+      const title = (result.title || "").toLowerCase();
+      const snippet = (result.snippet || "").toLowerCase();
+      const combined = title + " " + snippet;
+
+      // Count how many name words appear in the title+snippet
+      const matches = nameWords.filter((w) => combined.includes(w)).length;
+
+      // If at least half the meaningful words match, it's likely their site
+      if (nameWords.length > 0 && matches >= Math.ceil(nameWords.length / 2)) {
+        return true;
       }
     }
 
