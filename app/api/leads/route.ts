@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
   }
 
   const useAI = !!process.env.ANTHROPIC_API_KEY;
+  const serperKey = process.env.SERPER_API_KEY || null;
 
   const generateSummary = useAI
     ? generateSummaryWithAI
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
   const seenIds: string[] = Array.isArray(body.seenIds) ? body.seenIds : [];
 
   try {
-    const leads = await fetchLeads(seenIds, apiKey, generateSummary);
+    const leads = await fetchLeads(seenIds, apiKey, serperKey, generateSummary);
     return NextResponse.json({ leads, aiSummaries: useAI });
   } catch (err) {
     console.error(err);

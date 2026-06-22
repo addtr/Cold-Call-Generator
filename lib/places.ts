@@ -129,9 +129,67 @@ function parseLocation(address: string): { city: string; state: string } {
   return { city, state };
 }
 
+// Directory/social sites that are NOT a real business website
+const DIRECTORY_DOMAINS = [
+  "yelp.com", "facebook.com", "instagram.com", "google.com",
+  "yellowpages.com", "bbb.org", "angi.com", "thumbtack.com",
+  "homeadvisor.com", "houzz.com", "nextdoor.com", "linkedin.com",
+  "twitter.com", "tiktok.com", "mapquest.com", "tripadvisor.com",
+];
+
+function isDirectorySite(url: string): boolean {
+  return DIRECTORY_DOMAINS.some((d) => url.includes(d));
+}
+
+// Uses Serper.dev to Google the business and check if they have a real website.
+// Returns true if a real website is found (i.e., skip this business).
+async function hasWebsiteViaSearch(
+  name: string,
+  city: string,
+  state: string,
+  serperKey: string
+): Promise<boolean> {
+  try {
+    const res = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-KEY": serperKey,
+      },
+      body: JSON.stringify({ q: `"${name}" ${city} ${state}`, num: 5 }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+
+    // Check knowledge graph website
+    if (data.knowledgeGraph?.website) {
+      const site = data.knowledgeGraph.website;
+      if (!isDirectorySite(site)) return true;
+    }
+
+    // Check organic results for a dedicated business site
+    for (const result of data.organic || []) {
+      const link: string = result.link || "";
+      if (!isDirectorySite(link)) {
+        // If the result title or snippet strongly matches the business name, it's their site
+        const title: string = (result.title || "").toLowerCase();
+        const nameLower = name.toLowerCase().split(" ")[0];
+        if (nameLower.length > 3 && title.includes(nameLower)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export async function fetchLeads(
   seenIds: string[],
   apiKey: string,
+  serperKey: string | null,
   generateSummary: (business: Omit<BusinessLead, "summary">) => Promise<string>
 ): Promise<BusinessLead[]> {
   const leads: BusinessLead[] = [];
@@ -172,7 +230,7 @@ export async function fetchLeads(
     // Must be operational
     if (p.businessStatus && p.businessStatus !== "OPERATIONAL") continue;
 
-    // Must NOT have a website
+    // Must NOT have a website (Places API check)
     if (p.websiteUri) continue;
 
     // Must have a phone number
@@ -181,14 +239,27 @@ export async function fetchLeads(
 
     const address = p.formattedAddress || "";
     const loc = parseLocation(address);
+    const city = loc.city || candidate.location.city;
+    const state = loc.state || candidate.location.state;
+
+    // Secondary check: Google the business to catch websites Places missed
+    if (serperKey) {
+      const foundWebsite = await hasWebsiteViaSearch(
+        p.displayName?.text || "",
+        city,
+        state,
+        serperKey
+      );
+      if (foundWebsite) continue;
+    }
 
     const base: Omit<BusinessLead, "summary"> = {
       placeId: p.id,
       name: p.displayName?.text || "Unknown",
       phone,
       address,
-      city: loc.city || candidate.location.city,
-      state: loc.state || candidate.location.state,
+      city,
+      state,
       category: candidate.type.label,
       rating: p.rating ?? null,
       reviewCount: p.userRatingCount ?? null,
