@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { fetchLeads, BusinessLead } from "@/lib/places";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+function templateSummary(business: Omit<BusinessLead, "summary">): string {
+  const ratingPart =
+    business.rating && business.reviewCount
+      ? `They already have a ${business.rating}-star rating with ${business.reviewCount} Google reviews, so customers love them.`
+      : business.rating
+      ? `They have a ${business.rating}-star rating on Google.`
+      : `They have a solid local reputation but no online presence yet.`;
 
-async function generateSummary(business: Omit<BusinessLead, "summary">): Promise<string> {
+  return `${ratingPart} Since ${business.name} has no website, a simple site could help them show up on Google searches and turn more ${business.city} locals into paying customers.`;
+}
+
+async function generateSummaryWithAI(business: Omit<BusinessLead, "summary">): Promise<string> {
+  const { default: Anthropic } = await import("@anthropic-ai/sdk");
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
   const ratingNote =
     business.rating && business.reviewCount
       ? `They have a ${business.rating}-star rating with ${business.reviewCount} reviews.`
@@ -35,19 +46,19 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json(
-      { error: "ANTHROPIC_API_KEY is not configured. See setup instructions." },
-      { status: 500 }
-    );
-  }
+
+  const useAI = !!process.env.ANTHROPIC_API_KEY;
+
+  const generateSummary = useAI
+    ? generateSummaryWithAI
+    : (b: Omit<BusinessLead, "summary">) => Promise.resolve(templateSummary(b));
 
   const body = await req.json().catch(() => ({}));
   const seenIds: string[] = Array.isArray(body.seenIds) ? body.seenIds : [];
 
   try {
     const leads = await fetchLeads(seenIds, apiKey, generateSummary);
-    return NextResponse.json({ leads });
+    return NextResponse.json({ leads, aiSummaries: useAI });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: "Failed to fetch leads. Check server logs." }, { status: 500 });
