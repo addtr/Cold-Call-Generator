@@ -144,6 +144,10 @@ const DIRECTORY_DOMAINS = [
   "yellowpages.com", "bbb.org", "angi.com", "thumbtack.com",
   "homeadvisor.com", "houzz.com", "nextdoor.com", "linkedin.com",
   "twitter.com", "tiktok.com", "mapquest.com", "tripadvisor.com",
+  "angieslist.com", "porch.com", "bark.com", "fixr.com",
+  "expertise.com", "manta.com", "superpages.com", "citysearch.com",
+  "merchantcircle.com", "local.com", "mapquest.com", "whitepages.com",
+  "chamberofcommerce.com", "hotfrog.com", "cylex.us",
 ];
 
 function isDirectorySite(url: string): boolean {
@@ -170,31 +174,48 @@ async function hasWebsiteViaSearch(
     if (!res.ok) return false;
     const data = await res.json();
 
-    // Knowledge graph with a non-directory website = has a site
+    // Knowledge graph with a non-directory website = definitely has a site
     if (data.knowledgeGraph?.website) {
       if (!isDirectorySite(data.knowledgeGraph.website)) return true;
     }
 
-    // Build a set of meaningful words from the business name (3+ chars)
+    // Build meaningful words from the business name (3+ chars, no stop words)
+    const stopWords = new Set(["the","and","for","llc","inc","co","of","in","at","by","my","mr","mrs","dr"]);
     const nameWords = name
       .toLowerCase()
       .replace(/[^a-z0-9\s]/g, "")
       .split(/\s+/)
-      .filter((w) => w.length >= 3 && !["the","and","for","llc","inc","co"].includes(w));
+      .filter((w) => w.length >= 3 && !stopWords.has(w));
+
+    // Build a slug version of the name for domain matching
+    const nameSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
 
     for (const result of data.organic || []) {
-      const link: string = result.link || "";
+      const link: string = (result.link || "").toLowerCase();
       if (isDirectorySite(link)) continue;
 
       const title = (result.title || "").toLowerCase();
       const snippet = (result.snippet || "").toLowerCase();
       const combined = title + " " + snippet;
 
-      // Count how many name words appear in the title+snippet
-      const matches = nameWords.filter((w) => combined.includes(w)).length;
+      // 1. Domain contains a significant chunk of the business name slug
+      try {
+        const domain = new URL(link).hostname.replace("www.", "").replace(/\.[^.]+$/, "").replace(/[^a-z0-9]/g, "");
+        if (nameSlug.length >= 5 && (domain.includes(nameSlug.slice(0, 6)) || nameSlug.includes(domain.slice(0, 6)))) {
+          return true;
+        }
+      } catch {}
 
-      // If at least half the meaningful words match, it's likely their site
-      if (nameWords.length > 0 && matches >= Math.ceil(nameWords.length / 2)) {
+      // 2. Majority of name words appear in title+snippet
+      if (nameWords.length > 0) {
+        const matches = nameWords.filter((w) => combined.includes(w)).length;
+        const threshold = nameWords.length === 1 ? 1 : Math.ceil(nameWords.length * 0.6);
+        if (matches >= threshold) return true;
+      }
+
+      // 3. Any non-directory result in the top 3 that mentions the city = likely their site
+      const resultIndex = (data.organic || []).indexOf(result);
+      if (resultIndex < 3 && combined.includes(city.toLowerCase())) {
         return true;
       }
     }
