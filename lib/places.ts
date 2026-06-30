@@ -188,7 +188,7 @@ async function checkViaSearch(
       },
       body: JSON.stringify({ q: `"${name}" ${city} ${state}`, num: 10 }),
     });
-    if (!res.ok) return { hasWebsite: false, intentSignals: [] };
+    if (!res.ok) return { hasWebsite: true, intentSignals: [] }; // can't verify = skip it
     const data = await res.json();
 
     // Knowledge graph with a non-directory website = definitely has a site
@@ -247,7 +247,7 @@ async function checkViaSearch(
 
     return { hasWebsite: false, intentSignals };
   } catch {
-    return { hasWebsite: false, intentSignals: [] };
+    return { hasWebsite: true, intentSignals: [] }; // can't verify = skip it
   }
 }
 
