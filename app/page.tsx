@@ -13,6 +13,8 @@ type Lead = {
   rating: number | null;
   reviewCount: number | null;
   hours: string[] | null;
+  priority: "high" | "normal";
+  priorityReasons: string[];
   summary: string;
 };
 
@@ -92,6 +94,14 @@ function LeadCard({ lead, index }: { lead: Lead; index: number }) {
             }}>
               No Website
             </span>
+            {lead.priority === "high" && (
+              <span style={{
+                fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                background: "rgba(251,191,36,0.12)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.3)",
+              }}>
+                🔥 Hot Lead
+              </span>
+            )}
           </div>
           <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3 }}>
             {lead.name}
@@ -125,6 +135,21 @@ function LeadCard({ lead, index }: { lead: Lead; index: number }) {
           </div>
         )}
       </div>
+
+      {/* Priority reasons */}
+      {lead.priorityReasons.length > 0 && (
+        <div style={{
+          display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 12,
+        }}>
+          {lead.priorityReasons.map((r, i) => (
+            <span key={i} style={{
+              fontSize: 11, padding: "3px 8px", borderRadius: 6,
+              background: "rgba(251,191,36,0.08)", color: "#fbbf24",
+              border: "1px solid rgba(251,191,36,0.2)",
+            }}>⚡ {r}</span>
+          ))}
+        </div>
+      )}
 
       {/* Talking points */}
       <div style={{

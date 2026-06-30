@@ -9,6 +9,8 @@ export type BusinessLead = {
   rating: number | null;
   reviewCount: number | null;
   hours: string[] | null;
+  priority: "high" | "normal";
+  priorityReasons: string[];
   summary: string;
 };
 
@@ -154,14 +156,29 @@ function isDirectorySite(url: string): boolean {
   return DIRECTORY_DOMAINS.some((d) => url.includes(d));
 }
 
-// Uses Serper.dev to Google the business and check if they have a real website.
-// Returns true if a real website is found (i.e., skip this business).
-async function hasWebsiteViaSearch(
+// Phrases in search results that signal the business wants/needs a website
+const NEED_WEBSITE_SIGNALS = [
+  "no website", "doesn't have a website", "does not have a website",
+  "looking for a website", "need a website", "needs a website",
+  "want a website", "wants a website", "building a website",
+  "can't find online", "cannot find online", "hard to find online",
+  "not online", "no online presence", "no web presence",
+  "call for info", "call for details", "call us for",
+  "no site", "visit us in person", "stop by",
+];
+
+type SearchResult = {
+  hasWebsite: boolean;
+  intentSignals: string[]; // reasons we think they want a website
+};
+
+// Check website existence AND collect intent signals from the same search call.
+async function checkViaSearch(
   name: string,
   city: string,
   state: string,
   serperKey: string
-): Promise<boolean> {
+): Promise<SearchResult> {
   try {
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -171,15 +188,16 @@ async function hasWebsiteViaSearch(
       },
       body: JSON.stringify({ q: `"${name}" ${city} ${state}`, num: 10 }),
     });
-    if (!res.ok) return false;
+    if (!res.ok) return { hasWebsite: false, intentSignals: [] };
     const data = await res.json();
 
     // Knowledge graph with a non-directory website = definitely has a site
     if (data.knowledgeGraph?.website) {
-      if (!isDirectorySite(data.knowledgeGraph.website)) return true;
+      if (!isDirectorySite(data.knowledgeGraph.website)) {
+        return { hasWebsite: true, intentSignals: [] };
+      }
     }
 
-    // Build meaningful words from the business name (3+ chars, no stop words)
     const stopWords = new Set(["the","and","for","llc","inc","co","of","in","at","by","my","mr","mrs","dr"]);
     const nameWords = name
       .toLowerCase()
@@ -187,44 +205,96 @@ async function hasWebsiteViaSearch(
       .split(/\s+/)
       .filter((w) => w.length >= 3 && !stopWords.has(w));
 
-    // Build a slug version of the name for domain matching
     const nameSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const intentSignals: string[] = [];
 
     for (const result of data.organic || []) {
       const link: string = (result.link || "").toLowerCase();
-      if (isDirectorySite(link)) continue;
-
       const title = (result.title || "").toLowerCase();
       const snippet = (result.snippet || "").toLowerCase();
       const combined = title + " " + snippet;
 
-      // 1. Domain contains a significant chunk of the business name slug
-      try {
-        const domain = new URL(link).hostname.replace("www.", "").replace(/\.[^.]+$/, "").replace(/[^a-z0-9]/g, "");
-        if (nameSlug.length >= 5 && (domain.includes(nameSlug.slice(0, 6)) || nameSlug.includes(domain.slice(0, 6)))) {
-          return true;
-        }
-      } catch {}
+      if (!isDirectorySite(link)) {
+        // Domain slug match
+        try {
+          const domain = new URL(link).hostname.replace("www.", "").replace(/\.[^.]+$/, "").replace(/[^a-z0-9]/g, "");
+          if (nameSlug.length >= 5 && (domain.includes(nameSlug.slice(0, 6)) || nameSlug.includes(domain.slice(0, 6)))) {
+            return { hasWebsite: true, intentSignals: [] };
+          }
+        } catch {}
 
-      // 2. Majority of name words appear in title+snippet
-      if (nameWords.length > 0) {
-        const matches = nameWords.filter((w) => combined.includes(w)).length;
-        const threshold = nameWords.length === 1 ? 1 : Math.ceil(nameWords.length * 0.6);
-        if (matches >= threshold) return true;
+        // Name word match in content
+        if (nameWords.length > 0) {
+          const matches = nameWords.filter((w) => combined.includes(w)).length;
+          const threshold = nameWords.length === 1 ? 1 : Math.ceil(nameWords.length * 0.6);
+          if (matches >= threshold) return { hasWebsite: true, intentSignals: [] };
+        }
+
+        // Top-3 non-directory result that mentions the city
+        const resultIndex = (data.organic || []).indexOf(result);
+        if (resultIndex < 3 && combined.includes(city.toLowerCase())) {
+          return { hasWebsite: true, intentSignals: [] };
+        }
       }
 
-      // 3. Any non-directory result in the top 3 that mentions the city = likely their site
-      const resultIndex = (data.organic || []).indexOf(result);
-      if (resultIndex < 3 && combined.includes(city.toLowerCase())) {
-        return true;
+      // Scan ALL results (including directories) for intent signals
+      for (const signal of NEED_WEBSITE_SIGNALS) {
+        if (combined.includes(signal) && !intentSignals.includes(signal)) {
+          intentSignals.push(signal);
+        }
       }
     }
 
-    return false;
+    return { hasWebsite: false, intentSignals };
   } catch {
-    return false;
+    return { hasWebsite: false, intentSignals: [] };
   }
 }
+
+// Score a business — higher = better cold call target
+function scoreBusiness(
+  rating: number | null,
+  reviewCount: number | null,
+  intentSignals: string[]
+): { score: number; reasons: string[] } {
+  let score = 0;
+  const reasons: string[] = [];
+
+  // Established business with real reviews = golden target
+  if (reviewCount && reviewCount >= 50) {
+    score += 4;
+    reasons.push(`${reviewCount} Google reviews but no website`);
+  } else if (reviewCount && reviewCount >= 20) {
+    score += 2;
+    reasons.push(`${reviewCount} Google reviews, no web presence`);
+  } else if (reviewCount && reviewCount >= 5) {
+    score += 1;
+  }
+
+  // High rating = quality business worth pitching
+  if (rating && rating >= 4.5) {
+    score += 3;
+    reasons.push(`${rating}★ rating — customers love them`);
+  } else if (rating && rating >= 4.0) {
+    score += 2;
+    reasons.push(`Strong ${rating}★ rating`);
+  } else if (rating && rating >= 3.5) {
+    score += 1;
+  }
+
+  // Intent signals from search results
+  if (intentSignals.length > 0) {
+    score += intentSignals.length * 3;
+    reasons.push("Online mentions suggest they need web help");
+  }
+
+  return { score, reasons };
+}
+
+type ScoredCandidate = {
+  base: Omit<BusinessLead, "summary">;
+  score: number;
+};
 
 export async function fetchLeads(
   seenIds: string[],
@@ -233,7 +303,6 @@ export async function fetchLeads(
   openNowOnly: boolean,
   generateSummary: (business: Omit<BusinessLead, "summary">) => Promise<string>
 ): Promise<BusinessLead[]> {
-  const leads: BusinessLead[] = [];
   const seen = new Set(seenIds);
 
   type Candidate = {
@@ -246,8 +315,9 @@ export async function fetchLeads(
   const shuffledCities = shuffle(EAST_COAST_CITIES);
   const shuffledTypes = shuffle(BUSINESS_TYPES);
 
-  for (const location of shuffledCities.slice(0, 12)) {
-    for (const type of shuffledTypes.slice(0, 5)) {
+  // Collect a larger pool so we can score and rank them
+  for (const location of shuffledCities.slice(0, 15)) {
+    for (const type of shuffledTypes.slice(0, 6)) {
       const query = `${type.query} in ${location.city} ${location.state}`;
       const places = await searchAndFetchPlaces(query, apiKey);
       for (const place of places) {
@@ -255,29 +325,24 @@ export async function fetchLeads(
           candidates.push({ place, type, location });
         }
       }
-      if (candidates.length >= 150) break;
+      if (candidates.length >= 200) break;
     }
-    if (candidates.length >= 150) break;
+    if (candidates.length >= 200) break;
   }
 
-  const shuffledCandidates = shuffle(candidates);
+  // Phase 1: filter — verify no website, has phone, is operational
+  const scored: ScoredCandidate[] = [];
 
-  for (const candidate of shuffledCandidates) {
-    if (leads.length >= 20) break;
+  for (const candidate of shuffle(candidates)) {
+    if (scored.length >= 60) break; // score up to 60 valid candidates then rank
     if (seen.has(candidate.place.id)) continue;
 
     const p = candidate.place;
 
-    // Must be operational
     if (p.businessStatus && p.businessStatus !== "OPERATIONAL") continue;
-
-    // If open-now filter is on, skip businesses that are currently closed
     if (openNowOnly && !p.currentOpeningHours?.openNow) continue;
-
-    // Must NOT have a website (Places API check)
     if (p.websiteUri) continue;
 
-    // Must have a phone number
     const phone = p.nationalPhoneNumber || p.internationalPhoneNumber;
     if (!phone) continue;
 
@@ -285,34 +350,48 @@ export async function fetchLeads(
     const loc = parseLocation(address);
     const city = loc.city || candidate.location.city;
     const state = loc.state || candidate.location.state;
+    const name = p.displayName?.text || "Unknown";
 
-    // Secondary check: Google the business to catch websites Places missed
+    // Serper check: verify no website AND collect intent signals
+    let intentSignals: string[] = [];
     if (serperKey) {
-      const foundWebsite = await hasWebsiteViaSearch(
-        p.displayName?.text || "",
-        city,
-        state,
-        serperKey
-      );
-      if (foundWebsite) continue;
+      const result = await checkViaSearch(name, city, state, serperKey);
+      if (result.hasWebsite) continue;
+      intentSignals = result.intentSignals;
     }
 
-    const base: Omit<BusinessLead, "summary"> = {
-      placeId: p.id,
-      name: p.displayName?.text || "Unknown",
-      phone,
-      address,
-      city,
-      state,
-      category: candidate.type.label,
-      rating: p.rating ?? null,
-      reviewCount: p.userRatingCount ?? null,
-      hours: p.regularOpeningHours?.weekdayDescriptions ?? null,
-    };
+    const { score, reasons } = scoreBusiness(p.rating ?? null, p.userRatingCount ?? null, intentSignals);
 
+    scored.push({
+      score,
+      base: {
+        placeId: p.id,
+        name,
+        phone,
+        address,
+        city,
+        state,
+        category: candidate.type.label,
+        rating: p.rating ?? null,
+        reviewCount: p.userRatingCount ?? null,
+        hours: p.regularOpeningHours?.weekdayDescriptions ?? null,
+        priority: score >= 5 ? "high" : "normal",
+        priorityReasons: reasons,
+      },
+    });
+
+    seen.add(p.id);
+  }
+
+  // Phase 2: sort by score descending, take top 20
+  scored.sort((a, b) => b.score - a.score);
+  const top20 = scored.slice(0, 20);
+
+  // Phase 3: generate summaries
+  const leads: BusinessLead[] = [];
+  for (const { base } of top20) {
     const summary = await generateSummary(base);
     leads.push({ ...base, summary });
-    seen.add(p.id);
   }
 
   return leads;
