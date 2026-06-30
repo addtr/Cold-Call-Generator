@@ -180,20 +180,26 @@ async function checkViaSearch(
   serperKey: string
 ): Promise<SearchResult> {
   try {
+    // Search without quotes so Google matches more flexibly
     const res = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-API-KEY": serperKey,
       },
-      body: JSON.stringify({ q: `"${name}" ${city} ${state}`, num: 10 }),
+      body: JSON.stringify({ q: `${name} ${city} ${state}`, num: 10 }),
     });
     if (!res.ok) return { hasWebsite: true, intentSignals: [] }; // can't verify = skip it
     const data = await res.json();
 
-    // Knowledge graph with a non-directory website = definitely has a site
-    if (data.knowledgeGraph?.website) {
-      if (!isDirectorySite(data.knowledgeGraph.website)) {
+    // 1. Knowledge graph lists a non-directory website
+    if (data.knowledgeGraph?.website && !isDirectorySite(data.knowledgeGraph.website)) {
+      return { hasWebsite: true, intentSignals: [] };
+    }
+
+    // 2. Any result has sitelinks = it's definitely their own website
+    for (const result of data.organic || []) {
+      if (result.sitelinks && result.sitelinks.length > 0 && !isDirectorySite(result.link || "")) {
         return { hasWebsite: true, intentSignals: [] };
       }
     }
@@ -204,40 +210,45 @@ async function checkViaSearch(
       .replace(/[^a-z0-9\s]/g, "")
       .split(/\s+/)
       .filter((w) => w.length >= 3 && !stopWords.has(w));
-
     const nameSlug = name.toLowerCase().replace(/[^a-z0-9]/g, "");
     const intentSignals: string[] = [];
 
-    for (const result of data.organic || []) {
-      const link: string = (result.link || "").toLowerCase();
+    const organicResults: { link: string; title: string; snippet: string; sitelinks?: unknown[] }[] = data.organic || [];
+
+    for (let i = 0; i < organicResults.length; i++) {
+      const result = organicResults[i];
+      const link = (result.link || "").toLowerCase();
       const title = (result.title || "").toLowerCase();
       const snippet = (result.snippet || "").toLowerCase();
       const combined = title + " " + snippet;
 
       if (!isDirectorySite(link)) {
-        // Domain slug match
+        // 3. Domain name closely matches the business name slug
         try {
-          const domain = new URL(link).hostname.replace("www.", "").replace(/\.[^.]+$/, "").replace(/[^a-z0-9]/g, "");
-          if (nameSlug.length >= 5 && (domain.includes(nameSlug.slice(0, 6)) || nameSlug.includes(domain.slice(0, 6)))) {
+          const domain = new URL(link).hostname
+            .replace("www.", "")
+            .replace(/\.[^.]+$/, "")
+            .replace(/[^a-z0-9]/g, "");
+          const minLen = Math.min(domain.length, nameSlug.length);
+          if (minLen >= 4 && (domain.includes(nameSlug.slice(0, 5)) || nameSlug.includes(domain.slice(0, 5)))) {
             return { hasWebsite: true, intentSignals: [] };
           }
         } catch {}
 
-        // Name word match in content
+        // 4. Enough name words appear in the result content (lowered threshold to 40%)
         if (nameWords.length > 0) {
           const matches = nameWords.filter((w) => combined.includes(w)).length;
-          const threshold = nameWords.length === 1 ? 1 : Math.ceil(nameWords.length * 0.6);
+          const threshold = nameWords.length === 1 ? 1 : Math.max(1, Math.floor(nameWords.length * 0.4));
           if (matches >= threshold) return { hasWebsite: true, intentSignals: [] };
         }
 
-        // Top-3 non-directory result that mentions the city
-        const resultIndex = (data.organic || []).indexOf(result);
-        if (resultIndex < 3 && combined.includes(city.toLowerCase())) {
+        // 5. Any non-directory result in top 5 mentions both the business category words and city
+        if (i < 5 && combined.includes(city.toLowerCase())) {
           return { hasWebsite: true, intentSignals: [] };
         }
       }
 
-      // Scan ALL results (including directories) for intent signals
+      // Collect intent signals from all results
       for (const signal of NEED_WEBSITE_SIGNALS) {
         if (combined.includes(signal) && !intentSignals.includes(signal)) {
           intentSignals.push(signal);
