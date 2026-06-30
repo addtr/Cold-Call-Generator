@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { BUSINESS_TYPES } from "@/lib/places";
+
+const ALL_CATEGORIES = BUSINESS_TYPES.map((t) => t.label);
 
 type Lead = {
   placeId: string;
@@ -212,6 +215,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [totalGenerated, setTotalGenerated] = useState(0);
   const [openNowOnly, setOpenNowOnly] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   const getSeen = (): string[] => {
     try { return JSON.parse(localStorage.getItem("seen_place_ids") || "[]"); } catch { return []; }
@@ -227,7 +231,7 @@ export default function Home() {
       const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seenIds: getSeen(), openNowOnly }),
+        body: JSON.stringify({ seenIds: getSeen(), openNowOnly, selectedCategories }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Something went wrong."); return; }
@@ -239,7 +243,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [openNowOnly]);
+  }, [openNowOnly, selectedCategories]);
 
   const clearHistory = () => { localStorage.removeItem("seen_place_ids"); setTotalGenerated(0); setLeads([]); };
 
@@ -333,6 +337,50 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Category filter bar */}
+      <div style={{ borderBottom: "1px solid var(--border)", background: "rgba(13,13,20,0.6)", backdropFilter: "blur(8px)" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "10px 24px", display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          <span style={{ color: "var(--text-muted)", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>Category:</span>
+          {/* All pill */}
+          <button
+            onClick={() => setSelectedCategories([])}
+            style={{
+              padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 700,
+              cursor: "pointer", border: "1px solid",
+              background: selectedCategories.length === 0 ? "var(--green)" : "transparent",
+              color: selectedCategories.length === 0 ? "#000" : "var(--text-secondary)",
+              borderColor: selectedCategories.length === 0 ? "var(--green)" : "var(--border)",
+              transition: "all 0.15s",
+            }}
+          >
+            All
+          </button>
+          {ALL_CATEGORIES.map((cat) => {
+            const active = selectedCategories.includes(cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => {
+                  setSelectedCategories(prev =>
+                    prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+                  );
+                }}
+                style={{
+                  padding: "5px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600,
+                  cursor: "pointer", border: "1px solid",
+                  background: active ? "rgba(16,217,126,0.15)" : "transparent",
+                  color: active ? "var(--green)" : "var(--text-secondary)",
+                  borderColor: active ? "rgba(16,217,126,0.4)" : "var(--border)",
+                  transition: "all 0.15s",
+                }}
+              >
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }}>
 

@@ -56,7 +56,7 @@ const EAST_COAST_CITIES = [
   { city: "West Palm Beach", state: "FL" },
 ];
 
-const BUSINESS_TYPES = [
+export const BUSINESS_TYPES = [
   { query: "plumber", label: "Plumbing" },
   { query: "electrician", label: "Electrical" },
   { query: "barber shop", label: "Barber Shop" },
@@ -312,6 +312,7 @@ export async function fetchLeads(
   apiKey: string,
   serperKey: string | null,
   openNowOnly: boolean,
+  selectedCategories: string[], // empty = all
   generateSummary: (business: Omit<BusinessLead, "summary">) => Promise<string>
 ): Promise<BusinessLead[]> {
   const seen = new Set(seenIds);
@@ -324,7 +325,10 @@ export async function fetchLeads(
   const candidates: Candidate[] = [];
 
   const shuffledCities = shuffle(EAST_COAST_CITIES);
-  const shuffledTypes = shuffle(BUSINESS_TYPES);
+  const activeTypes = selectedCategories.length > 0
+    ? BUSINESS_TYPES.filter((t) => selectedCategories.includes(t.label))
+    : BUSINESS_TYPES;
+  const shuffledTypes = shuffle(activeTypes);
 
   // Collect a larger pool so we can score and rank them
   for (const location of shuffledCities.slice(0, 15)) {
